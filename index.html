@@ -148,6 +148,12 @@ code{background:#f0ede8;padding:1px 6px;border-radius:6px;font-size:13px}
 .donow .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent2);font-weight:700}
 .donow .v{font-weight:600;margin-top:2px}
 .donow .t{font-size:12px;color:var(--muted);margin-top:1px}
+.qa textarea{width:100%;border:1px solid var(--line);border-radius:13px;padding:13px 62px 13px 14px;font-size:16px;background:#fff;box-shadow:var(--shsoft);font-family:inherit;line-height:1.4;resize:none;overflow:hidden;min-height:48px;display:block}
+.qa textarea:focus{outline:none;border-color:var(--accent)}
+.dnav{display:flex;align-items:center;gap:8px}
+.dnav .dnc{flex:1;text-align:center}
+.dnav button{flex:none;width:36px;height:36px;border:1px solid var(--line);background:#fff;border-radius:11px;font-size:17px;cursor:pointer;color:var(--ink2)}
+.wkday{cursor:pointer}
 </style>
 </head>
 <body>
@@ -177,7 +183,7 @@ code{background:#f0ede8;padding:1px 6px;border-radius:6px;font-size:13px}
       <button class="icbtn" id="refreshBtn" title="Refresh">⟳</button>
     </div>
     <div class="qa">
-      <input id="quick" placeholder="פגישה מחר ב8 בערב שעה  ·  Read 30m tue" autocomplete="off" enterkeyhint="done">
+      <textarea id="quick" rows="1" placeholder="פגישה מחר ב8 בערב שעה  ·  Read 30m tue" autocomplete="off" enterkeyhint="done"></textarea>
       <button class="go" id="quickGo">Add</button>
     </div>
     <div class="parsed" id="parsed"></div>
@@ -186,8 +192,8 @@ code{background:#f0ede8;padding:1px 6px;border-radius:6px;font-size:13px}
   <main><div class="wrap">
 
     <section id="t-today" class="tab on">
-      <div class="daydate" id="tdDate"></div>
-      <div class="daysub" id="tdTheme"></div>
+      <div class="dnav"><button id="dPrev" aria-label="Previous day">‹</button><div class="dnc"><div class="daydate" id="tdDate"></div><div class="daysub" id="tdTheme"></div></div><button id="dNext" aria-label="Next day">›</button></div>
+      <button class="btn sec" id="dToday" style="display:none;padding:8px;margin:2px 0 10px">↩ Back to today</button>
       <div class="statline">
         <div class="stat"><div class="n" id="stFree">–</div><div class="l">free left</div></div>
         <div class="stat"><div class="n" id="stEvents">–</div><div class="l">still ahead</div></div>
@@ -298,6 +304,7 @@ let tasks=DB.get("tasks",[]);
 let wakeOverrides=DB.get("wake_ovr",{});
 let doneLog=DB.get("done_log",{});
 let weekStart=startOfWeek(new Date());
+let selDay=new Date();selDay.setHours(0,0,0,0);
 let eventCache={};
 let proposal=[];
 let curTab="today";
@@ -454,32 +461,34 @@ function describeParse(p){
 
 function renderToday(){
   const now=new Date(),nowMin=now.getHours()*60+now.getMinutes();
-  const d=new Date(),dow=d.getDay();
-  $("#tdDate").textContent=`${FULLDAY[dow]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  const d=new Date(selDay),dow=d.getDay(),dkey=ymd(d),isToday=dkey===todayKey;
+  $("#dToday").style.display=isToday?"none":"block";
+  $("#tdDate").textContent=(isToday?"Today · ":"")+`${FULLDAY[dow]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
   $("#tdTheme").textContent=THEMES[dow]||"";
-  const allItems=busyFor(d), items=allItems.filter(it=>it.endMin>nowMin), gaps=freeGaps(d), fm=freeMinutes(d);
+  const allItems=busyFor(d), items=isToday?allItems.filter(it=>it.endMin>nowMin):allItems, gaps=freeGaps(d), fm=freeMinutes(d);
   $("#stFree").textContent=fm>0?fmtDur(fm):"0";
   $("#stEvents").textContent=items.length;
   $("#stTasks").textContent=tasks.filter(t=>!t.done).length;
   $("#qCount").textContent=tasks.filter(t=>!t.done).length;
+  $(".wakecard").style.display=isToday?"flex":"none";
   $("#wakeToday").value=wakeOverrides[todayKey]||prefs.wake;
-  $("#wakeSub").textContent="Today is planned from "+minToHM(dayStart(d));
+  $("#wakeSub").textContent="Today is planned from "+minToHM(dayStart(new Date()));
 
   const nw=$("#nextWrap");nw.innerHTML="";
-  if(items.length){const u=items[0];const box=el("div","next");
+  if(isToday&&items.length){const u=items[0];const box=el("div","next");
     box.innerHTML=`<div class="k">${u.startMin>nowMin?"Up next":"Now"}</div><div class="v">${u.title}</div><div class="t">${minToHM(u.startMin)}–${minToHM(u.endMin)}${u.startMin>nowMin?" · in "+fmtDur(u.startMin-nowMin):""}</div>`;
     nw.appendChild(box);}
 
   const ag=$("#agenda");ag.innerHTML="";
-  const alld=eventsOn(todayKey).filter(e=>e.allDay);
+  const alld=eventsOn(dkey).filter(e=>e.allDay);
   for(const e of alld){const r=el("div","ev allday");r.appendChild(stripe(e.color));r.appendChild(el("span","tm","all"));r.appendChild(el("span","nm",e.title));ag.appendChild(r);}
   const rows=[];
   items.forEach(it=>rows.push({k:it.startMin,kind:"ev",it}));
   gaps.forEach(g=>rows.push({k:g[0],kind:"gap",g}));
-  rows.push({k:nowMin,kind:"now"});
+  if(isToday)rows.push({k:nowMin,kind:"now"});
   rows.sort((a,b)=>a.k-b.k||(a.kind==="now"?-1:0));
   for(const r of rows){
-    if(r.kind==="now"){if(nowMin>=dayStart(d)-1&&nowMin<=hmToMin(prefs.sleep)){const n=el("div","nowrow");n.innerHTML=`<span class="dot"></span>now ${minToHM(nowMin)}<span class="ln"></span>`;ag.appendChild(n);}continue;}
+    if(r.kind==="now"){if(isToday&&nowMin>=dayStart(d)-1&&nowMin<=hmToMin(prefs.sleep)){const n=el("div","nowrow");n.innerHTML=`<span class="dot"></span>now ${minToHM(nowMin)}<span class="ln"></span>`;ag.appendChild(n);}continue;}
     if(r.kind==="gap"){const dur=r.g[1]-r.g[0];const row=el("div","gap");row.innerHTML=`<span>${minToHM(r.g[0])}–${minToHM(r.g[1])}</span> · <span class="d">${fmtDur(dur)} free</span><span class="plus">＋</span>`;row.onclick=()=>{$("#quick").focus();};ag.appendChild(row);continue;}
     const it=r.it;const row=el("div","ev"+(it.plan?" plan":""));
     row.appendChild(stripe(it.color));
@@ -488,8 +497,8 @@ function renderToday(){
     if(it.id&&!it.plan){const x=el("button","x","✕");x.onclick=()=>delEvent(it.id,it.title);row.appendChild(x);}
     ag.appendChild(row);
   }
-  if(!items.length&&!alld.length){ag.appendChild(el("div","empty","Nothing left today — your time is open."));}
-  renderMomentum();renderDoNow();
+  if(!items.length&&!alld.length){ag.appendChild(el("div","empty",isToday?"Nothing left today — your time is open.":"Nothing scheduled this day yet."));}
+  renderMomentum();if(isToday)renderDoNow();else $("#doNow").innerHTML="";
   renderTaskList();
   renderProposal();
 }
@@ -557,6 +566,7 @@ function renderWeek(){
     const key=ymd(d),dow=d.getDay(),isToday=key===todayKey,wknd=dow===5||dow===6;
     if(!prefs.showWknd&&wknd)continue;
     const cell=el("div","wkday"+(isToday?" today":"")+(wknd?" wknd":""));
+    cell.onclick=()=>openDay(d);
     const head=el("div","dayhead");
     head.appendChild(el("span","nm",`${DAYNAMES[dow]} ${d.getDate()}/${d.getMonth()+1}`));
     if(THEMES[dow])head.appendChild(el("span","th",THEMES[dow]));
@@ -599,9 +609,12 @@ async function addFixed(p,atMin){
   let day=p.day||todayKey;
   if(day===todayKey){const now=new Date();if(atMin<=now.getHours()*60+now.getMinutes()){const d=new Date();d.setDate(d.getDate()+1);day=ymd(d);}}
   const endMin=Math.min(atMin+p.dur,1439);
+  const dd=new Date(day+"T00:00:00");
+  const cf=(eventCache[day]?busyFor(dd):[]).find(x=>!x.plan&&atMin<x.endMin&&endMin>x.startMin);
+  if(cf&&!confirm(`That overlaps "${cf.title}" (${minToHM(cf.startMin)}–${minToHM(cf.endMin)}).\nAdd it anyway?`))return;
   const b=$("#quickGo");b.disabled=true;b.textContent="…";
   try{await createEvent({summary:p.title,start:`${day}T${minToHM(atMin)}:00`,end:`${day}T${minToHM(endMin)}:00`,colorId:"7"});
-    $("#quick").value="";$("#parsed").innerHTML="";await refresh();
+    $("#quick").value="";$("#quick").style.height="auto";$("#parsed").innerHTML="";await refresh();
     const dd=new Date(day+"T00:00:00");toast(`✓ ${p.title} · ${DAYNAMES[dd.getDay()]} ${minToHM(atMin)}`);
   }catch(e){toast("Couldn't add: "+e.message);}
   b.disabled=false;b.textContent="Add";
@@ -617,7 +630,7 @@ function commitQuick(){
   const p=parseQuick(v);if(!p.title){toast("Add a name");return;}
   if(p.atMin!=null){if(p.atAmbiguous){promptAmPm(p);return;}addFixed(p,p.atMin);return;}
   tasks.push({id:id(),title:p.title,dur:p.dur,priority:p.priority,when:p.when,day:p.day,done:false});
-  saveTasks();$("#quick").value="";$("#parsed").textContent="";renderToday();toast("Task queued — tap Plan");
+  saveTasks();$("#quick").value="";$("#quick").style.height="auto";$("#parsed").textContent="";renderToday();toast("Task queued — tap Plan");
 }
 async function delEvent(eid,title){
   if(!confirm('Delete "'+title+'" from your calendar?'))return;
@@ -642,6 +655,12 @@ function setTab(t){
   $("#topTitle").textContent=t==="today"?"Today":t==="week"?"Week":"Settings";
   window.scrollTo({top:0,behavior:"smooth"});
 }
+
+function gotoDay(delta){
+  if(delta===0){selDay=new Date();selDay.setHours(0,0,0,0);}else{selDay.setDate(selDay.getDate()+delta);}
+  const ws=startOfWeek(selDay);if(ws.getTime()!==weekStart.getTime()){weekStart=ws;refresh();}else{renderToday();}
+}
+function openDay(d){selDay=new Date(d);selDay.setHours(0,0,0,0);const ws=startOfWeek(selDay);if(ws.getTime()!==weekStart.getTime()){weekStart=ws;refresh();}else{renderToday();}setTab("today");}
 
 let everStarted=false;
 async function startApp(){
@@ -671,9 +690,13 @@ function wire(){
   if($("#changeCid2"))$("#changeCid2").onclick=goSetup;
   $("#connectBtn").onclick=()=>{getToken().catch(()=>toast("Sign-in failed — check Client ID & origin"));};
   $("#refreshBtn").onclick=()=>{refresh();toast("Refreshed");};
-  $("#quick").addEventListener("input",()=>{const v=$("#quick").value.trim();$("#parsed").textContent=v?describeParse(parseQuick(v)):"";});
-  $("#quick").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();commitQuick();}});
+  const qa=$("#quick");const grow=()=>{qa.style.height="auto";qa.style.height=Math.min(qa.scrollHeight,170)+"px";};
+  qa.addEventListener("input",()=>{const v=qa.value.trim();$("#parsed").textContent=v?describeParse(parseQuick(v)):"";grow();});
+  qa.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();commitQuick();}});
   $("#quickGo").onclick=commitQuick;
+  $("#dPrev").onclick=()=>gotoDay(-1);
+  $("#dNext").onclick=()=>gotoDay(1);
+  $("#dToday").onclick=()=>gotoDay(0);
   $("#planBtn").onclick=doPlan;
   $("#approveBtn").onclick=approve;
   $("#discardBtn").onclick=()=>{proposal=[];renderToday();renderWeek();};
