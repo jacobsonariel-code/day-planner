@@ -138,6 +138,16 @@ code{background:#f0ede8;padding:1px 6px;border-radius:6px;font-size:13px}
 .wakecard input{width:104px;border:1px solid var(--softline);border-radius:10px;padding:9px;font-size:16px;background:#fff;font-variant-numeric:tabular-nums}
 .wakecard button{border:none;background:var(--accent);color:#fff;border-radius:10px;padding:10px 15px;font-weight:600;cursor:pointer}
 .ptime{width:90px;border:1px solid var(--softline);border-radius:8px;padding:6px 8px;font-size:13px;background:#fff;font-variant-numeric:tabular-nums}
+.mo{display:flex;align-items:center;gap:13px;background:linear-gradient(135deg,#fbeee7,#f7e7df);border:1px solid var(--softline);border-radius:14px;padding:13px 15px;margin:12px 0}
+.ring{width:54px;height:54px;border-radius:50%;background:conic-gradient(var(--accent) calc(var(--p,0)*1%),#e6ddd6 0);display:flex;align-items:center;justify-content:center;flex:none}
+.ring i{width:40px;height:40px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;font-style:normal;color:var(--accent2)}
+.mo .mt{font-weight:680;font-size:14px}
+.mo .ms{font-size:12px;color:var(--ink2);margin-top:2px}
+.mo .streak{font-size:12px;color:var(--accent2);font-weight:600;margin-top:3px}
+.donow{background:#fff;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:11px 13px;margin:0 0 12px;box-shadow:var(--shsoft)}
+.donow .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent2);font-weight:700}
+.donow .v{font-weight:600;margin-top:2px}
+.donow .t{font-size:12px;color:var(--muted);margin-top:1px}
 </style>
 </head>
 <body>
@@ -184,6 +194,8 @@ code{background:#f0ede8;padding:1px 6px;border-radius:6px;font-size:13px}
         <div class="stat"><div class="n" id="stTasks">0</div><div class="l">tasks queued</div></div>
       </div>
 
+      <div id="moWrap"></div>
+
       <div class="wakecard">
         <div class="wk-l"><div class="wk-t">☀️ When did you wake up today?</div><div class="wk-s" id="wakeSub"></div></div>
         <input id="wakeToday" type="time">
@@ -191,6 +203,7 @@ code{background:#f0ede8;padding:1px 6px;border-radius:6px;font-size:13px}
       </div>
 
       <div id="nextWrap"></div>
+      <div id="doNow"></div>
 
       <div class="h2">Today's schedule</div>
       <div id="agenda"></div>
@@ -283,6 +296,7 @@ let prefs=Object.assign({wake:"06:30",sleep:"22:00",buffer:10,autowake:true,show
 let EMAIL=DB.get("email","");
 let tasks=DB.get("tasks",[]);
 let wakeOverrides=DB.get("wake_ovr",{});
+let doneLog=DB.get("done_log",{});
 let weekStart=startOfWeek(new Date());
 let eventCache={};
 let proposal=[];
@@ -475,10 +489,36 @@ function renderToday(){
     ag.appendChild(row);
   }
   if(!items.length&&!alld.length){ag.appendChild(el("div","empty","Nothing left today — your time is open."));}
+  renderMomentum();renderDoNow();
   renderTaskList();
   renderProposal();
 }
 function stripe(color){const s=el("span","stripe");s.style.background=color;return s;}
+function bumpDone(){doneLog[todayKey]=(doneLog[todayKey]||0)+1;DB.set("done_log",doneLog);}
+function streakCount(){let s=0,d=new Date();d.setHours(0,0,0,0);if(!doneLog[ymd(d)])d.setDate(d.getDate()-1);while(doneLog[ymd(d)]>0){s++;d.setDate(d.getDate()-1);}return s;}
+function renderMomentum(){
+  const open=tasks.filter(t=>!t.done).length, done=doneLog[todayKey]||0, total=done+open;
+  const pct=total?Math.round(done/total*100):(done?100:0), st=streakCount();
+  const mo=$("#moWrap");mo.innerHTML="";const box=el("div","mo");
+  const head=done?(open?"Keep the momentum going":"All done today — beautiful."):(open?"Let's land the first one":"Add a task to get rolling");
+  box.innerHTML=`<div class="ring" style="--p:${pct}"><i>${done}/${total||0}</i></div><div style="flex:1"><div class="mt">${head}</div><div class="ms">${done} done today${open?` · ${open} to go`:""}</div><div class="streak">🔥 ${st} day streak</div></div>`;
+  mo.appendChild(box);
+}
+function bestNow(){
+  const now=new Date(),nowMin=now.getHours()*60+now.getMinutes(),gaps=freeGaps(new Date());
+  let avail=0;for(const g of gaps){if(nowMin>=g[0]&&nowMin<g[1]){avail=g[1]-nowMin;break;}}
+  if(!avail){const ng=gaps.find(g=>g[0]>=nowMin);if(ng)avail=ng[1]-ng[0];}
+  const open=tasks.filter(t=>!t.done);if(!open.length)return null;
+  const rank=t=>({hi:0,med:1,lo:2}[t.priority]??1);
+  const fit=open.filter(t=>t.dur<=avail).sort((a,b)=>rank(a)-rank(b));
+  return {t:fit[0]||open.slice().sort((a,b)=>rank(a)-rank(b))[0],avail};
+}
+function renderDoNow(){
+  const dn=$("#doNow");dn.innerHTML="";const b=bestNow();if(!b)return;
+  const box=el("div","donow");
+  box.innerHTML=`<div class="k">Do this now</div><div class="v">${b.t.title}</div><div class="t">${fmtDur(b.t.dur)}${b.avail?` · you have ${fmtDur(b.avail)} free right now`:""}</div>`;
+  dn.appendChild(box);
+}
 
 function renderTaskList(){
   const box=$("#taskList");box.innerHTML="";
@@ -486,7 +526,7 @@ function renderTaskList(){
   if(!open.length){box.appendChild(el("div","empty","No tasks queued. Type one above; I'll fit it into free time."));return;}
   for(const t of open){
     const row=el("div","item");
-    const chk=el("div","chk pri-"+t.priority);chk.onclick=()=>{t.done=true;saveTasks();renderToday();toast("Done ✓");};row.appendChild(chk);
+    const chk=el("div","chk pri-"+t.priority);chk.onclick=()=>{t.done=true;saveTasks();bumpDone();const st=streakCount();renderToday();toast(st>1?`Nice — done! 🔥 ${st} day streak`:"Nice — that's done! ✓");};row.appendChild(chk);
     const g=el("div","grow");g.appendChild(el("div","ttl",t.title));
     let dt="";if(t.day===todayKey)dt=" · today";else if(t.day){const dd=new Date(t.day+"T00:00:00");dt=` · ${DAYNAMES[dd.getDay()]} ${dd.getDate()}/${dd.getMonth()+1}`;}
     g.appendChild(el("div","meta",`${fmtDur(t.dur)}${t.when&&t.when!=="any"?" · "+t.when:""}${dt}`));row.appendChild(g);
