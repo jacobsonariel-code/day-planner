@@ -296,7 +296,6 @@ for(const k in wakeOverrides)if(k<todayKey)delete wakeOverrides[k];
 let toT;function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toT);toT=setTimeout(()=>t.classList.remove("show"),2800);}
 function show(which){["setup","signin","app"].forEach(s=>$("#"+s).classList.toggle("on",s===which));}
 
-/* ===== auth (remembers you) ===== */
 function ensureClient(){
   if(tokenClient||!CLIENT_ID||!(window.google&&google.accounts&&google.accounts.oauth2))return tokenClient;
   tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SCOPE,hint:EMAIL||undefined,
@@ -322,7 +321,6 @@ async function gcal(path,opts={}){
   return r.status===204?{}:r.json();
 }
 
-/* ===== calendar I/O ===== */
 async function fetchWeek(){
   const start=new Date(weekStart),end=new Date(weekStart);end.setDate(end.getDate()+7);
   const url=`/calendars/primary/events?singleEvents=true&orderBy=startTime&maxResults=250&timeMin=${encodeURIComponent(start.toISOString())}&timeMax=${encodeURIComponent(end.toISOString())}`;
@@ -341,7 +339,6 @@ async function createEvent(b){
 }
 async function deleteEvent(eid){return gcal("/calendars/primary/events/"+encodeURIComponent(eid),{method:"DELETE"});}
 
-/* ===== busy + gaps ===== */
 function eventsOn(key){return (eventCache[key]||[]);}
 function busyFor(date){
   const key=ymd(date),out=[];
@@ -365,7 +362,6 @@ function freeGaps(date){
 function freeMinutes(date){return freeGaps(date).reduce((a,g)=>a+(g[1]-g[0]),0);}
 const WIN={morning:[0,720],afternoon:[720,1020],evening:[1020,1440],any:[0,1440]};
 
-/* ===== scheduler ===== */
 function planTasks(){
   proposal=[];
   const buf=Number(prefs.buffer)||0,open=tasks.filter(t=>!t.done),rank=t=>({hi:0,med:1,lo:2}[t.priority]??1);
@@ -388,7 +384,6 @@ function planTasks(){
   return fail;
 }
 
-/* ===== parser ===== */
 const STOP=new Set(["i'm","im","i","am","is","going","go","to","the","a","an","at","on","for","will","play","playing","do","have","get","got","want","need","my","me","אני","אנחנו","הולך","הולכת","הולכים","ללכת","לשחק","לעשות","לעבוד","רוצה","צריך","צריכה","יש","לי","את","עם","ב","של","ה","אל","יהיה","יהיו","ביום","היום","וחצי","חצי","ורבע","רבע","ו","שעה","שעות"]);
 function nextDate(dow){const d=new Date();d.setHours(0,0,0,0);while(d.getDay()!==dow)d.setDate(d.getDate()+1);return ymd(d);}
 function extractClock(s){
@@ -400,7 +395,7 @@ function extractClock(s){
   if(hour==null||hour>23)return null;
   if(/\bpm\b/i.test(s))ampm="pm"; if(/\bam\b/i.test(s))ampm="am";
   let q=null;
-  if(/בבוקר|morning/i.test(s))q="m"; else if(/בערב|בלילה|evening|night|tonight/i.test(s))q="e"; else if(/בצהריים|אחה"צ|afternoon|noon/i.test(s))q="a";
+  if(/בבוקר|morning/i.test(s))q="m"; else if(/בערב|בלילה|evening|night|tonight/i.test(s))q="e"; else if(/בצהריים|אחה\"צ|afternoon|noon/i.test(s))q="a";
   const baseHour=hour;let ambiguous=false;
   if(ampm==="pm"){if(hour<12)hour+=12;}else if(ampm==="am"){if(hour===12)hour=0;}
   else if(q==="e"){if(hour<12)hour+=12;}else if(q==="a"){if(hour<7)hour+=12;}else if(q==="m"){}
@@ -423,7 +418,7 @@ function parseQuick(raw){
   else if(/\b(low)\b|נמוך|מתישהו/i.test(s)){priority="lo";s=s.replace(/\b(low)\b|נמוך|מתישהו/ig," ");}
   s=s.replace(/!/g," ");
   if(/\b(morning)\b|בוקר/i.test(s))when="morning";else if(/\b(afternoon|noon)\b|צהריים/i.test(s))when="afternoon";else if(/\b(evening|night|tonight)\b|ערב|לילה/i.test(s))when="evening";
-  s=s.replace(/בבוקר|בערב|בלילה|בצהריים|אחה"צ|\b(morning|afternoon|noon|evening|night|tonight|am|pm|o'?clock)\b/ig," ");
+  s=s.replace(/בבוקר|בערב|בלילה|בצהריים|אחה\"צ|\b(morning|afternoon|noon|evening|night|tonight|am|pm|o'?clock)\b/ig," ");
   if(/\b(today)\b|היום/i.test(s)){day=todayKey;s=s.replace(/\b(today)\b|היום/ig," ");}
   else if(/\b(tomorrow)\b|מחר/i.test(s)){const d=new Date();d.setDate(d.getDate()+1);day=ymd(d);s=s.replace(/\b(tomorrow)\b|מחר/ig," ");}
   else{for(const k in HEDAY)if(s.includes(k)){day=nextDate(HEDAY[k]);s=s.replace(new RegExp(k,"g")," ");break;}
@@ -443,7 +438,6 @@ function describeParse(p){
   return "✓ "+p.title+" · "+bits.join(" · ");
 }
 
-/* ===== render: TODAY ===== */
 function renderToday(){
   const now=new Date(),nowMin=now.getHours()*60+now.getMinutes();
   const d=new Date(),dow=d.getDay();
@@ -516,7 +510,6 @@ function renderProposal(fails){
   if(fails&&fails.length)list.appendChild(el("div","morelink","⚠ Couldn't fit: "+fails.join(", ")));
 }
 
-/* ===== render: WEEK ===== */
 function renderWeek(){
   const w=$("#week");w.innerHTML="";
   for(let i=0;i<7;i++){
@@ -540,7 +533,6 @@ function renderWeek(){
   $("#wkLabel").textContent=`${weekStart.getDate()} ${MONTHS[weekStart.getMonth()]} – ${end.getDate()} ${MONTHS[end.getMonth()]}`;
 }
 
-/* ===== actions ===== */
 function maybeAutoWake(){
   if(!prefs.autowake||wakeOverrides[todayKey])return;
   const n=new Date(),m=n.getHours()*60+n.getMinutes();
@@ -592,7 +584,6 @@ async function delEvent(eid,title){
   try{await deleteEvent(eid);toast("Deleted");await refresh();}catch(e){toast("Couldn't delete: "+e.message);}
 }
 
-/* ===== accent themes ===== */
 const ACCENTS=[
   {a:"#c4623f",b:"#a8492a",soft:"#f7e7df",sl:"#edd3c7"},
   {a:"#3a7d8c",b:"#2c606c",soft:"#e1eef0",sl:"#cce1e5"},
@@ -604,7 +595,6 @@ function applyAccent(i){const c=ACCENTS[i]||ACCENTS[0],r=document.documentElemen
   const tm=document.querySelector('meta[name=theme-color]');if(tm)tm.content=c.a;}
 function buildSwatches(){const w=$("#swatches");if(!w)return;w.innerHTML="";ACCENTS.forEach((c,i)=>{const d=el("div","sd"+(prefs.accent===i?" on":""));d.style.background=c.a;d.onclick=()=>{prefs.accent=i;savePrefs();applyAccent(i);buildSwatches();};w.appendChild(d);});}
 
-/* ===== tabs ===== */
 function setTab(t){
   curTab=t;
   document.querySelectorAll("nav.bottom button").forEach(b=>b.classList.toggle("on",b.dataset.tab===t));
@@ -613,7 +603,6 @@ function setTab(t){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* ===== startup ===== */
 let everStarted=false;
 async function startApp(){
   if(!everStarted){everStarted=true;
@@ -631,7 +620,6 @@ function startAuthFlow(){
   if(DB.get("granted",0))getToken().catch(()=>show("signin"));
 }
 
-/* ===== wiring ===== */
 function wire(){
   applyAccent(prefs.accent||0);buildSwatches();
   $("#optAutowake").checked=!!prefs.autowake;$("#optAutowake").onchange=e=>{prefs.autowake=e.target.checked;savePrefs();if(e.target.checked){maybeAutoWake();renderToday();renderWeek();}};
@@ -660,7 +648,6 @@ function wire(){
   document.addEventListener("visibilitychange",()=>{if(!document.hidden&&$("#app").classList.contains("on"))refresh();});
 }
 
-/* boot */
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 wire();
 (function boot(n){

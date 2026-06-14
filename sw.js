@@ -12,7 +12,7 @@ self.addEventListener('activate', e => {
 });
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  if (url.origin !== location.origin) return; // let Google API + auth go straight to network
+  if (url.origin !== location.origin) return;
   e.respondWith(
     fetch(e.request)
       .then(res => { const cp = res.clone(); caches.open(CACHE).then(c => c.put(e.request, cp)); return res; })
