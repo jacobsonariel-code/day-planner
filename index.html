@@ -34,8 +34,6 @@ img{max-width:100%}
 .icbtn{border:1px solid var(--line);background:#fff;color:var(--ink2);width:38px;height:38px;border-radius:11px;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .icbtn:active{transform:scale(.94)}
 .qa{position:relative;margin-top:9px}
-.qa input{width:100%;border:1px solid var(--line);border-radius:13px;padding:13px 64px 13px 14px;font-size:16px;background:#fff;box-shadow:var(--shsoft)}
-.qa input:focus{outline:none;border-color:var(--accent)}
 .qa .go{position:absolute;right:6px;top:6px;bottom:6px;padding:0 15px;border:none;background:var(--accent);color:#fff;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer}
 .qa .go:active{background:var(--accent2)}
 .parsed{font-size:12.5px;color:var(--accent2);min-height:0;padding:0 2px;transition:.15s}
@@ -50,10 +48,6 @@ main{padding-bottom:calc(var(--nav) + 16px)}
 .h2 .count{font-size:11px;background:#f0ede8;border-radius:20px;padding:1px 8px;color:var(--muted);font-weight:500;text-transform:none;letter-spacing:0}
 .daydate{font-size:21px;font-weight:700;letter-spacing:-.02em}
 .daysub{font-size:13px;color:var(--accent2);margin-top:1px}
-.statline{display:flex;gap:8px;margin:12px 0 2px}
-.stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:10px 12px;box-shadow:var(--shsoft)}
-.stat .n{font-size:18px;font-weight:700;line-height:1.1;color:var(--accent2)}
-.stat .l{font-size:11px;color:var(--muted);margin-top:2px}
 .next{background:linear-gradient(135deg,#fbeee7,#f7e7df);border:1px solid var(--softline);border-radius:var(--r);padding:13px 15px;margin-bottom:12px}
 .next .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent2);font-weight:650}
 .next .v{font-size:16px;font-weight:600;margin-top:3px}
@@ -131,19 +125,9 @@ code{background:#f0ede8;padding:1px 6px;border-radius:6px;font-size:13px}
 .swatches{display:flex;gap:12px}
 .swatches .sd{width:36px;height:36px;border-radius:50%;cursor:pointer;border:3px solid transparent;box-shadow:var(--shsoft)}
 .swatches .sd.on{border-color:var(--ink)}
-.wakecard{display:flex;align-items:center;gap:10px;background:var(--soft);border:1px solid var(--softline);border-radius:14px;padding:11px 13px;margin:12px 0}
-.wakecard .wk-l{flex:1;min-width:0}
-.wakecard .wk-t{font-weight:600;font-size:13.5px}
-.wakecard .wk-s{font-size:11.5px;color:var(--accent2);margin-top:2px}
-.wakecard input{width:104px;border:1px solid var(--softline);border-radius:10px;padding:9px;font-size:16px;background:#fff;font-variant-numeric:tabular-nums}
-.wakecard button{border:none;background:var(--accent);color:#fff;border-radius:10px;padding:10px 15px;font-weight:600;cursor:pointer}
 .ptime{width:90px;border:1px solid var(--softline);border-radius:8px;padding:6px 8px;font-size:13px;background:#fff;font-variant-numeric:tabular-nums}
-.mo{display:flex;align-items:center;gap:13px;background:linear-gradient(135deg,#fbeee7,#f7e7df);border:1px solid var(--softline);border-radius:14px;padding:13px 15px;margin:12px 0}
 .ring{width:54px;height:54px;border-radius:50%;background:conic-gradient(var(--accent) calc(var(--p,0)*1%),#e6ddd6 0);display:flex;align-items:center;justify-content:center;flex:none}
 .ring i{width:40px;height:40px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;font-style:normal;color:var(--accent2)}
-.mo .mt{font-weight:680;font-size:14px}
-.mo .ms{font-size:12px;color:var(--ink2);margin-top:2px}
-.mo .streak{font-size:12px;color:var(--accent2);font-weight:600;margin-top:3px}
 .donow{background:#fff;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:11px 13px;margin:0 0 12px;box-shadow:var(--shsoft)}
 .donow .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent2);font-weight:700}
 .donow .v{font-weight:600;margin-top:2px}
@@ -163,6 +147,15 @@ code{background:#f0ede8;padding:1px 6px;border-radius:6px;font-size:13px}
 .chips{display:flex;gap:6px;flex-wrap:wrap;padding:8px 2px 0}
 .chips .c{font-size:11.5px;color:var(--accent2);background:var(--soft);border:1px solid var(--softline);border-radius:20px;padding:5px 11px;cursor:pointer;white-space:nowrap}
 .qhint{font-size:11px;color:var(--muted);padding:7px 2px 0;line-height:1.4}
+.evmain .nm,.item .ttl,.next .v,.donow .v,.mini .nm,.parsed,.toast,#quick{unicode-bidi:plaintext}
+#quick{text-align:start}
+.sumc{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:13px 15px;margin:12px 0}
+.sumstats{display:flex;gap:16px;flex-wrap:wrap}
+.sumstats .s b{display:block;font-size:16px;font-weight:700;color:var(--ink);line-height:1.1}
+.sumstats .s span{font-size:11px;color:var(--muted)}
+.sumc .streak{font-size:11.5px;color:var(--accent2);font-weight:600;margin-top:7px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wakechip{display:inline-flex;align-items:center;gap:5px;background:var(--soft);border:1px solid var(--softline);border-radius:20px;padding:3px 10px}
+.wakechip input{border:none;background:transparent;font:inherit;color:var(--accent2);width:54px;padding:0;cursor:pointer}
 </style>
 </head>
 <body>
@@ -205,19 +198,7 @@ code{background:#f0ede8;padding:1px 6px;border-radius:6px;font-size:13px}
     <section id="t-today" class="tab on">
       <div class="dnav"><button id="dPrev" aria-label="Previous day">‹</button><div class="dnc"><div class="daydate" id="tdDate"></div><div class="daysub" id="tdTheme"></div></div><button id="dNext" aria-label="Next day">›</button></div>
       <button class="btn sec" id="dToday" style="display:none;padding:8px;margin:2px 0 10px">↩ Back to today</button>
-      <div class="statline">
-        <div class="stat"><div class="n" id="stFree">–</div><div class="l">free left</div></div>
-        <div class="stat"><div class="n" id="stEvents">–</div><div class="l">still ahead</div></div>
-        <div class="stat"><div class="n" id="stTasks">0</div><div class="l">tasks queued</div></div>
-      </div>
-
-      <div id="moWrap"></div>
-
-      <div class="wakecard">
-        <div class="wk-l"><div class="wk-t">☀️ When did you wake up today?</div><div class="wk-s" id="wakeSub"></div></div>
-        <input id="wakeToday" type="time">
-        <button id="imUp">Now</button>
-      </div>
+      <div id="summary"></div>
 
       <div id="nextWrap"></div>
       <div id="doNow"></div>
@@ -478,13 +459,8 @@ function renderToday(){
   $("#tdTheme").textContent=THEMES[dow]||"";
   const allItems=busyFor(d), gaps=freeGaps(d), fm=freeMinutes(d);
   const upcoming=isToday?allItems.filter(it=>it.endMin>nowMin):allItems;
-  $("#stFree").textContent=fm>0?fmtDur(fm):"0";
-  $("#stEvents").textContent=upcoming.length;
-  $("#stTasks").textContent=tasks.filter(t=>!t.done).length;
   $("#qCount").textContent=tasks.filter(t=>!t.done).length;
-  $(".wakecard").style.display=isToday?"flex":"none";
-  $("#wakeToday").value=wakeOverrides[todayKey]||prefs.wake;
-  $("#wakeSub").textContent="Today is planned from "+minToHM(dayStart(new Date()));
+  renderSummary(isToday,fm,upcoming.length);
 
   const nw=$("#nextWrap");nw.innerHTML="";
   if(isToday&&upcoming.length){const u=upcoming[0];const box=el("div","next");
@@ -511,21 +487,22 @@ function renderToday(){
     ag.appendChild(row);
   }
   if(!allItems.length&&!alld.length){ag.appendChild(el("div","empty",isToday?"Nothing scheduled today yet — your time is open.":"Nothing scheduled this day yet."));}
-  renderMomentum();if(isToday)renderDoNow();else $("#doNow").innerHTML="";
+  if(isToday)renderDoNow();else $("#doNow").innerHTML="";
   renderTaskList();
   renderProposal();
 }
 function stripe(color){const s=el("span","stripe");s.style.background=color;return s;}
+function renderSummary(isToday,fm,ahead){
+  const sm=$("#summary");if(!sm)return;
+  const done=doneLog[todayKey]||0,openN=tasks.filter(t=>!t.done).length,total=done+openN,pct=total?Math.round(done/total*100):(done?100:0),st=streakCount();
+  const wk=wakeOverrides[todayKey]||prefs.wake;
+  const c=el("div","sumc");
+  c.innerHTML=`<div class="ring" style="--p:${pct}"><i>${done}/${total||0}</i></div><div style="flex:1;min-width:0"><div class="sumstats"><div class="s"><b>${fm>0?fmtDur(fm):"0"}</b><span>free left</span></div><div class="s"><b>${ahead}</b><span>ahead</span></div><div class="s"><b>${openN}</b><span>tasks</span></div></div><div class="streak">🔥 ${st} day streak${isToday?` · <span class="wakechip">☀ up <input id="wakeToday" type="time" value="${wk}"></span>`:""}</div></div>`;
+  sm.innerHTML="";sm.appendChild(c);
+  const wt=$("#wakeToday");if(wt)wt.onchange=()=>{if(wt.value){wakeOverrides[todayKey]=wt.value;saveWake();renderToday();renderWeek();toast("Day starts at "+wt.value);}};
+}
 function bumpDone(){doneLog[todayKey]=(doneLog[todayKey]||0)+1;DB.set("done_log",doneLog);}
 function streakCount(){let s=0,d=new Date();d.setHours(0,0,0,0);if(!doneLog[ymd(d)])d.setDate(d.getDate()-1);while(doneLog[ymd(d)]>0){s++;d.setDate(d.getDate()-1);}return s;}
-function renderMomentum(){
-  const open=tasks.filter(t=>!t.done).length, done=doneLog[todayKey]||0, total=done+open;
-  const pct=total?Math.round(done/total*100):(done?100:0), st=streakCount();
-  const mo=$("#moWrap");mo.innerHTML="";const box=el("div","mo");
-  const head=done?(open?"Keep the momentum going":"All done today — beautiful."):(open?"Let's land the first one":"Add a task to get rolling");
-  box.innerHTML=`<div class="ring" style="--p:${pct}"><i>${done}/${total||0}</i></div><div style="flex:1"><div class="mt">${head}</div><div class="ms">${done} done today${open?` · ${open} to go`:""}</div><div class="streak">🔥 ${st} day streak</div></div>`;
-  mo.appendChild(box);
-}
 function bestNow(){
   const now=new Date(),nowMin=now.getHours()*60+now.getMinutes(),gaps=freeGaps(new Date());
   let avail=0;for(const g of gaps){if(nowMin>=g[0]&&nowMin<g[1]){avail=g[1]-nowMin;break;}}
@@ -714,8 +691,6 @@ function wire(){
   $("#planBtn").onclick=doPlan;
   $("#approveBtn").onclick=approve;
   $("#discardBtn").onclick=()=>{proposal=[];renderToday();renderWeek();};
-  $("#imUp").onclick=()=>{const n=new Date(),hm=pad(n.getHours())+":"+pad(n.getMinutes());wakeOverrides[todayKey]=hm;saveWake();renderToday();renderWeek();toast("Day now starts at "+hm);};
-  $("#wakeToday").addEventListener("change",()=>{if($("#wakeToday").value){wakeOverrides[todayKey]=$("#wakeToday").value;saveWake();renderToday();renderWeek();toast("Day now starts at "+$("#wakeToday").value);}});
   ["wake","sleep","buffer"].forEach(k=>$("#"+k).addEventListener("change",()=>{prefs.wake=$("#wake").value;prefs.sleep=$("#sleep").value;prefs.buffer=Number($("#buffer").value)||0;savePrefs();renderToday();renderWeek();}));
   $("#prevW").onclick=()=>{weekStart.setDate(weekStart.getDate()-7);refresh();};
   $("#nextW").onclick=()=>{weekStart.setDate(weekStart.getDate()+7);refresh();};
