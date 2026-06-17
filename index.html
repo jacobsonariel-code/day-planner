@@ -154,6 +154,15 @@ code{background:#f0ede8;padding:1px 6px;border-radius:6px;font-size:13px}
 .dnav .dnc{flex:1;text-align:center}
 .dnav button{flex:none;width:36px;height:36px;border:1px solid var(--line);background:#fff;border-radius:11px;font-size:17px;cursor:pointer;color:var(--ink2)}
 .wkday{cursor:pointer}
+.ev{align-items:flex-start}
+.evmain{flex:1;min-width:0}
+.evmain .nm{font-weight:540;white-space:normal;overflow-wrap:anywhere}
+.evsub{font-size:11px;color:var(--muted);margin-top:1px;font-variant-numeric:tabular-nums}
+.ev.past{opacity:.5}
+.ev.nowev{border-color:var(--accent);background:var(--soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:8px 2px 0}
+.chips .c{font-size:11.5px;color:var(--accent2);background:var(--soft);border:1px solid var(--softline);border-radius:20px;padding:5px 11px;cursor:pointer;white-space:nowrap}
+.qhint{font-size:11px;color:var(--muted);padding:7px 2px 0;line-height:1.4}
 </style>
 </head>
 <body>
@@ -187,6 +196,8 @@ code{background:#f0ede8;padding:1px 6px;border-radius:6px;font-size:13px}
       <button class="go" id="quickGo">Add</button>
     </div>
     <div class="parsed" id="parsed"></div>
+    <div class="chips" id="chips"></div>
+    <div class="qhint">Type naturally: <b>what + day + time + length</b> — e.g. “gym tomorrow 18:00 1h”. Leave out a time and it becomes a task I'll slot into a free gap.</div>
   </div></div>
 
   <main><div class="wrap">
@@ -465,9 +476,10 @@ function renderToday(){
   $("#dToday").style.display=isToday?"none":"block";
   $("#tdDate").textContent=(isToday?"Today · ":"")+`${FULLDAY[dow]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
   $("#tdTheme").textContent=THEMES[dow]||"";
-  const allItems=busyFor(d), items=isToday?allItems.filter(it=>it.endMin>nowMin):allItems, gaps=freeGaps(d), fm=freeMinutes(d);
+  const allItems=busyFor(d), gaps=freeGaps(d), fm=freeMinutes(d);
+  const upcoming=isToday?allItems.filter(it=>it.endMin>nowMin):allItems;
   $("#stFree").textContent=fm>0?fmtDur(fm):"0";
-  $("#stEvents").textContent=items.length;
+  $("#stEvents").textContent=upcoming.length;
   $("#stTasks").textContent=tasks.filter(t=>!t.done).length;
   $("#qCount").textContent=tasks.filter(t=>!t.done).length;
   $(".wakecard").style.display=isToday?"flex":"none";
@@ -475,29 +487,30 @@ function renderToday(){
   $("#wakeSub").textContent="Today is planned from "+minToHM(dayStart(new Date()));
 
   const nw=$("#nextWrap");nw.innerHTML="";
-  if(isToday&&items.length){const u=items[0];const box=el("div","next");
-    box.innerHTML=`<div class="k">${u.startMin>nowMin?"Up next":"Now"}</div><div class="v">${u.title}</div><div class="t">${minToHM(u.startMin)}–${minToHM(u.endMin)}${u.startMin>nowMin?" · in "+fmtDur(u.startMin-nowMin):""}</div>`;
+  if(isToday&&upcoming.length){const u=upcoming[0];const box=el("div","next");
+    box.innerHTML=`<div class="k">${u.startMin<=nowMin?"Happening now":"Up next"}</div><div class="v">${u.title}</div><div class="t">${minToHM(u.startMin)}–${minToHM(u.endMin)}${u.startMin>nowMin?" · in "+fmtDur(u.startMin-nowMin):" · "+fmtDur(u.endMin-nowMin)+" left"}</div>`;
     nw.appendChild(box);}
 
   const ag=$("#agenda");ag.innerHTML="";
   const alld=eventsOn(dkey).filter(e=>e.allDay);
-  for(const e of alld){const r=el("div","ev allday");r.appendChild(stripe(e.color));r.appendChild(el("span","tm","all"));r.appendChild(el("span","nm",e.title));ag.appendChild(r);}
+  for(const e of alld){const r=el("div","ev allday");r.appendChild(stripe(e.color));r.appendChild(el("span","tm","all"));r.appendChild(el("div","evmain",`<div class="nm">${e.title}</div>`));ag.appendChild(r);}
   const rows=[];
-  items.forEach(it=>rows.push({k:it.startMin,kind:"ev",it}));
+  allItems.forEach(it=>rows.push({k:it.startMin,kind:"ev",it}));
   gaps.forEach(g=>rows.push({k:g[0],kind:"gap",g}));
   if(isToday)rows.push({k:nowMin,kind:"now"});
   rows.sort((a,b)=>a.k-b.k||(a.kind==="now"?-1:0));
   for(const r of rows){
     if(r.kind==="now"){if(isToday&&nowMin>=dayStart(d)-1&&nowMin<=hmToMin(prefs.sleep)){const n=el("div","nowrow");n.innerHTML=`<span class="dot"></span>now ${minToHM(nowMin)}<span class="ln"></span>`;ag.appendChild(n);}continue;}
     if(r.kind==="gap"){const dur=r.g[1]-r.g[0];const row=el("div","gap");row.innerHTML=`<span>${minToHM(r.g[0])}–${minToHM(r.g[1])}</span> · <span class="d">${fmtDur(dur)} free</span><span class="plus">＋</span>`;row.onclick=()=>{$("#quick").focus();};ag.appendChild(row);continue;}
-    const it=r.it;const row=el("div","ev"+(it.plan?" plan":""));
+    const it=r.it;let cls=it.plan?" plan":"";if(isToday){if(it.endMin<=nowMin)cls+=" past";else if(it.startMin<=nowMin)cls+=" nowev";}
+    const row=el("div","ev"+cls);
     row.appendChild(stripe(it.color));
     row.appendChild(el("span","tm",minToHM(it.startMin)));
-    row.appendChild(el("span","nm",it.title));
-    if(it.id&&!it.plan){const x=el("button","x","✕");x.onclick=()=>delEvent(it.id,it.title);row.appendChild(x);}
+    const main=el("div","evmain");main.appendChild(el("div","nm",it.title));main.appendChild(el("div","evsub",`${minToHM(it.startMin)}–${minToHM(it.endMin)} · ${fmtDur(it.endMin-it.startMin)}`));row.appendChild(main);
+    if(it.id&&!it.plan){const x=el("button","x","✕");x.onclick=(ev)=>{ev.stopPropagation();delEvent(it.id,it.title);};row.appendChild(x);}
     ag.appendChild(row);
   }
-  if(!items.length&&!alld.length){ag.appendChild(el("div","empty",isToday?"Nothing left today — your time is open.":"Nothing scheduled this day yet."));}
+  if(!allItems.length&&!alld.length){ag.appendChild(el("div","empty",isToday?"Nothing scheduled today yet — your time is open.":"Nothing scheduled this day yet."));}
   renderMomentum();if(isToday)renderDoNow();else $("#doNow").innerHTML="";
   renderTaskList();
   renderProposal();
@@ -615,7 +628,7 @@ async function addFixed(p,atMin){
   const b=$("#quickGo");b.disabled=true;b.textContent="…";
   try{await createEvent({summary:p.title,start:`${day}T${minToHM(atMin)}:00`,end:`${day}T${minToHM(endMin)}:00`,colorId:"7"});
     $("#quick").value="";$("#quick").style.height="auto";$("#parsed").innerHTML="";await refresh();
-    const dd=new Date(day+"T00:00:00");toast(`✓ ${p.title} · ${DAYNAMES[dd.getDay()]} ${minToHM(atMin)}`);
+    const dd2=new Date(day+"T00:00:00");toast(`✓ ${p.title} · ${DAYNAMES[dd2.getDay()]} ${minToHM(atMin)}`);
   }catch(e){toast("Couldn't add: "+e.message);}
   b.disabled=false;b.textContent="Add";
 }
@@ -647,6 +660,7 @@ function applyAccent(i){const c=ACCENTS[i]||ACCENTS[0],r=document.documentElemen
   r.setProperty("--accent",c.a);r.setProperty("--accent2",c.b);r.setProperty("--soft",c.soft);r.setProperty("--softline",c.sl);
   const tm=document.querySelector('meta[name=theme-color]');if(tm)tm.content=c.a;}
 function buildSwatches(){const w=$("#swatches");if(!w)return;w.innerHTML="";ACCENTS.forEach((c,i)=>{const d=el("div","sd"+(prefs.accent===i?" on":""));d.style.background=c.a;d.onclick=()=>{prefs.accent=i;savePrefs();applyAccent(i);buildSwatches();};w.appendChild(d);});}
+function buildChips(){const ex=["פאדל מחר 8:00 שעה","Deep work !! sunday 09:00 90m","Read 30m tuesday","Call mom today 18:00 20m"];const c=$("#chips");if(!c)return;c.innerHTML="";ex.forEach(t=>{const b=el("span","c",t);b.onclick=()=>{const qa=$("#quick");qa.value=t;qa.dispatchEvent(new Event("input"));qa.focus();};c.appendChild(b);});}
 
 function setTab(t){
   curTab=t;
@@ -680,7 +694,7 @@ function startAuthFlow(){
 }
 
 function wire(){
-  applyAccent(prefs.accent||0);buildSwatches();
+  applyAccent(prefs.accent||0);buildSwatches();buildChips();
   $("#optAutowake").checked=!!prefs.autowake;$("#optAutowake").onchange=e=>{prefs.autowake=e.target.checked;savePrefs();if(e.target.checked){maybeAutoWake();renderToday();renderWeek();}};
   $("#optWknd").checked=prefs.showWknd!==false;$("#optWknd").onchange=e=>{prefs.showWknd=e.target.checked;savePrefs();renderWeek();};
   $("#optDur").value=prefs.defDur||60;$("#optDur").onchange=e=>{prefs.defDur=Math.max(10,Number(e.target.value)||60);savePrefs();};

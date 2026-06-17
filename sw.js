@@ -1,5 +1,5 @@
 // Service worker: network-first so redeploys show up, with offline cache fallback.
-const CACHE = 'planner-shell-v4';
+const CACHE = 'planner-shell-v5';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', e => {
