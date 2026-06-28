@@ -32,7 +32,6 @@ img{max-width:100%}
 .app-top h1{font-size:18px;margin:0;letter-spacing:-.01em;font-weight:680}
 .app-top .sp{flex:1}
 .icbtn{border:1px solid var(--line);background:#fff;color:var(--ink2);width:38px;height:38px;border-radius:11px;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.icbtn:active{transform:scale(.94)}
 .qa{position:relative;margin-top:9px}
 .qa .go{position:absolute;right:6px;top:6px;bottom:6px;padding:0 15px;border:none;background:var(--accent);color:#fff;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer}
 .qa .go:active{background:var(--accent2)}
@@ -156,6 +155,12 @@ code{background:#f0ede8;padding:1px 6px;border-radius:6px;font-size:13px}
 .sumc .streak{font-size:11.5px;color:var(--accent2);font-weight:600;margin-top:7px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .wakechip{display:inline-flex;align-items:center;gap:5px;background:var(--soft);border:1px solid var(--softline);border-radius:20px;padding:3px 10px}
 .wakechip input{border:none;background:transparent;font:inherit;color:var(--accent2);width:54px;padding:0;cursor:pointer}
+.ev{flex-wrap:wrap;transition:transform .1s}
+.evedit{flex-basis:100%;display:flex;align-items:center;gap:8px;margin-top:9px;padding-top:9px;border-top:1px dashed var(--line)}
+.evedit .ee-l{font-size:12px;color:var(--muted)}
+.evedit .x{margin-left:auto;color:var(--hi);font-weight:600;font-size:12.5px}
+.btn:active,.icbtn:active,.chips .c:active,.wknav button:active,.dnav button:active,.ev:active{transform:scale(.98)}
+.parsed button:active{transform:scale(.97)}
 </style>
 </head>
 <body>
@@ -185,12 +190,12 @@ code{background:#f0ede8;padding:1px 6px;border-radius:6px;font-size:13px}
       <button class="icbtn" id="refreshBtn" title="Refresh">⟳</button>
     </div>
     <div class="qa">
-      <textarea id="quick" rows="1" placeholder="פגישה מחר ב8 בערב שעה  ·  Read 30m tue" autocomplete="off" enterkeyhint="done"></textarea>
+      <textarea id="quick" rows="1" placeholder="פגישה עם דני מחר 18:00 שעה  ·  Read 30m tue" autocomplete="off" enterkeyhint="done"></textarea>
       <button class="go" id="quickGo">Add</button>
     </div>
     <div class="parsed" id="parsed"></div>
     <div class="chips" id="chips"></div>
-    <div class="qhint">Type naturally: <b>what + day + time + length</b> — e.g. “gym tomorrow 18:00 1h”. Leave out a time and it becomes a task I'll slot into a free gap.</div>
+    <div class="qhint">Type naturally: <b>what + day + time + length</b> — e.g. “פגישה עם דני מחר 18:00 שעה”. Leave out a time and it becomes a task I'll slot into a free gap.</div>
   </div></div>
 
   <main><div class="wrap">
@@ -397,7 +402,7 @@ function planTasks(){
   return fail;
 }
 
-const STOP=new Set(["i'm","im","i","am","is","going","go","to","the","a","an","at","on","for","will","play","playing","do","have","get","got","want","need","my","me","אני","אנחנו","הולך","הולכת","הולכים","ללכת","לשחק","לעשות","לעבוד","רוצה","צריך","צריכה","יש","לי","את","עם","ב","של","ה","אל","יהיה","יהיו","ביום","היום","וחצי","חצי","ורבע","רבע","ו","שעה","שעות"]);
+const STOP=new Set(["i'm","im","i","am","is","going","go","to","the","a","an","at","on","for","will","play","playing","do","have","get","got","want","need","my","me","אני","אנחנו","הולך","הולכת","הולכים","ללכת","לשחק","לעשות","לעבוד","רוצה","צריך","צריכה","יש","לי","את","ב","של","ה","אל","יהיה","יהיו","ביום","היום","וחצי","חצי","ורבע","רבע","ו","שעה","שעות"]);
 function nextDate(dow){const d=new Date();d.setHours(0,0,0,0);while(d.getDay()!==dow)d.setDate(d.getDate()+1);return ymd(d);}
 function extractClock(s){
   let hour=null,min=0,ampm=null,raw=null,m,form24=false;
@@ -483,7 +488,7 @@ function renderToday(){
     row.appendChild(stripe(it.color));
     row.appendChild(el("span","tm",minToHM(it.startMin)));
     const main=el("div","evmain");main.appendChild(el("div","nm",it.title));main.appendChild(el("div","evsub",`${minToHM(it.startMin)}–${minToHM(it.endMin)} · ${fmtDur(it.endMin-it.startMin)}`));row.appendChild(main);
-    if(it.id&&!it.plan){const x=el("button","x","✕");x.onclick=(ev)=>{ev.stopPropagation();delEvent(it.id,it.title);};row.appendChild(x);}
+    if(it.id&&!it.plan){row.style.cursor="pointer";row.onclick=(ev)=>{if(ev.target.closest(".evedit")||ev.target.classList.contains("x"))return;openEventEdit(row,it,dkey);};const x=el("button","x","✕");x.onclick=(ev)=>{ev.stopPropagation();delEvent(it.id,it.title);};row.appendChild(x);}
     ag.appendChild(row);
   }
   if(!allItems.length&&!alld.length){ag.appendChild(el("div","empty",isToday?"Nothing scheduled today yet — your time is open.":"Nothing scheduled this day yet."));}
@@ -492,6 +497,24 @@ function renderToday(){
   renderProposal();
 }
 function stripe(color){const s=el("span","stripe");s.style.background=color;return s;}
+function openEventEdit(row,it,dkey){
+  const ex=row.querySelector(".evedit");if(ex){ex.remove();return;}
+  const ed=el("div","evedit");
+  ed.appendChild(el("span","ee-l","Move to"));
+  const ti=el("input");ti.type="time";ti.className="ptime";ti.value=minToHM(it.startMin);ti.onclick=e=>e.stopPropagation();
+  ti.onchange=()=>{const nm=hmToMin(ti.value),dur=it.endMin-it.startMin;moveEvent(it.id,dkey,nm,Math.min(nm+dur,1439));};
+  const del=el("button","x","Delete");del.onclick=(e)=>{e.stopPropagation();delEvent(it.id,it.title);};
+  ed.appendChild(ti);ed.appendChild(del);row.appendChild(ed);
+}
+async function updateEvent(eid,start,end){return gcal("/calendars/primary/events/"+encodeURIComponent(eid),{method:"PATCH",body:JSON.stringify({start:{dateTime:start,timeZone:TZ},end:{dateTime:end,timeZone:TZ}})});}
+async function moveEvent(eid,dayKey,startMin,endMin){try{await updateEvent(eid,`${dayKey}T${minToHM(startMin)}:00`,`${dayKey}T${minToHM(endMin)}:00`);toast("Moved ✓");await refresh();}catch(e){toast("Move failed: "+e.message);}}
+function findSlot(date,dur,fromMin,exclId){
+  const sleep=hmToMin(prefs.sleep);
+  const busy=busyFor(date).filter(b=>b.id!==exclId).map(b=>[b.startMin,b.endMin]).sort((a,b)=>a[0]-b[0]);
+  let cur=Math.max(fromMin,dayStart(date));
+  for(const seg of busy){if(seg[0]>=cur){if(seg[0]-cur>=dur)return cur;}cur=Math.max(cur,seg[1]);}
+  return sleep-cur>=dur?cur:null;
+}
 function renderSummary(isToday,fm,ahead){
   const sm=$("#summary");if(!sm)return;
   const done=doneLog[todayKey]||0,openN=tasks.filter(t=>!t.done).length,total=done+openN,pct=total?Math.round(done/total*100):(done?100:0),st=streakCount();
@@ -600,14 +623,25 @@ async function addFixed(p,atMin){
   if(day===todayKey){const now=new Date();if(atMin<=now.getHours()*60+now.getMinutes()){const d=new Date();d.setDate(d.getDate()+1);day=ymd(d);}}
   const endMin=Math.min(atMin+p.dur,1439);
   const dd=new Date(day+"T00:00:00");
-  const cf=(eventCache[day]?busyFor(dd):[]).find(x=>!x.plan&&atMin<x.endMin&&endMin>x.startMin);
-  if(cf&&!confirm(`That overlaps "${cf.title}" (${minToHM(cf.startMin)}–${minToHM(cf.endMin)}).\nAdd it anyway?`))return;
+  const cf=(eventCache[day]?busyFor(dd):[]).find(x=>x.id&&!x.plan&&atMin<x.endMin&&endMin>x.startMin);
+  if(cf){promptConflict(p,atMin,day,endMin,cf,dd);return;}
+  doCreate(p,atMin,day,endMin);
+}
+async function doCreate(p,atMin,day,endMin){
   const b=$("#quickGo");b.disabled=true;b.textContent="…";
   try{await createEvent({summary:p.title,start:`${day}T${minToHM(atMin)}:00`,end:`${day}T${minToHM(endMin)}:00`,colorId:"7"});
     $("#quick").value="";$("#quick").style.height="auto";$("#parsed").innerHTML="";await refresh();
-    const dd2=new Date(day+"T00:00:00");toast(`✓ ${p.title} · ${DAYNAMES[dd2.getDay()]} ${minToHM(atMin)}`);
+    const dd=new Date(day+"T00:00:00");toast(`✓ ${p.title} · ${DAYNAMES[dd.getDay()]} ${minToHM(atMin)}`);
   }catch(e){toast("Couldn't add: "+e.message);}
   b.disabled=false;b.textContent="Add";
+}
+function promptConflict(p,atMin,day,endMin,cf,dd){
+  const box=$("#parsed");box.innerHTML="";
+  box.appendChild(document.createTextNode(`⚠ Overlaps "${cf.title}" (${minToHM(cf.startMin)}–${minToHM(cf.endMin)}).`));
+  box.appendChild(document.createElement("br"));
+  const mk=(l,fn)=>{const x=el("button",null,l);x.onclick=fn;return x;};
+  box.appendChild(mk(`Move "${cf.title}"`,async()=>{box.innerHTML="";const dur=cf.endMin-cf.startMin,slot=findSlot(dd,dur,endMin,cf.id);if(slot==null){toast("No free slot for it on this day");return;}try{await updateEvent(cf.id,`${day}T${minToHM(slot)}:00`,`${day}T${minToHM(slot+dur)}:00`);}catch(e){toast("Move failed");return;}await doCreate(p,atMin,day,endMin);toast(`Moved "${cf.title}" to ${minToHM(slot)}`);}));
+  box.appendChild(mk("Keep both",()=>{box.innerHTML="";doCreate(p,atMin,day,endMin);}));
 }
 function promptAmPm(p){
   const am=p.atBase*60+p.atMinute,pm=(p.atBase+12)*60+p.atMinute,box=$("#parsed");box.innerHTML="";
@@ -637,7 +671,7 @@ function applyAccent(i){const c=ACCENTS[i]||ACCENTS[0],r=document.documentElemen
   r.setProperty("--accent",c.a);r.setProperty("--accent2",c.b);r.setProperty("--soft",c.soft);r.setProperty("--softline",c.sl);
   const tm=document.querySelector('meta[name=theme-color]');if(tm)tm.content=c.a;}
 function buildSwatches(){const w=$("#swatches");if(!w)return;w.innerHTML="";ACCENTS.forEach((c,i)=>{const d=el("div","sd"+(prefs.accent===i?" on":""));d.style.background=c.a;d.onclick=()=>{prefs.accent=i;savePrefs();applyAccent(i);buildSwatches();};w.appendChild(d);});}
-function buildChips(){const ex=["פאדל מחר 8:00 שעה","Deep work !! sunday 09:00 90m","Read 30m tuesday","Call mom today 18:00 20m"];const c=$("#chips");if(!c)return;c.innerHTML="";ex.forEach(t=>{const b=el("span","c",t);b.onclick=()=>{const qa=$("#quick");qa.value=t;qa.dispatchEvent(new Event("input"));qa.focus();};c.appendChild(b);});}
+function buildChips(){const ex=["פגישה עם דני מחר 18:00 שעה","Deep work !! sunday 09:00 90m","Read 30m tuesday","ריצה היום 30 דקות"];const c=$("#chips");if(!c)return;c.innerHTML="";ex.forEach(t=>{const b=el("span","c",t);b.onclick=()=>{const qa=$("#quick");qa.value=t;qa.dispatchEvent(new Event("input"));qa.focus();};c.appendChild(b);});}
 
 function setTab(t){
   curTab=t;
